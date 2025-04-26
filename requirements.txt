@@ -1,0 +1,9 @@
+streamlit
+pandas
+youtube-transcript-api
+requests
+nltk
+spacy
+openai
+python-dotenv
+wordcloud
