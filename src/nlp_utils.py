@@ -1,42 +1,23 @@
 import nltk
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import sys
+from textblob import TextBlob
+import re
 
 # Download required NLTK data
 try:
-    nltk.data.find('sentiment/vader_lexicon.zip')
+    nltk.data.find('punkt')
 except LookupError:
-    nltk.download('vader_lexicon', quiet=True)
-
-# Initialize the analyzer
-analyzer = SentimentIntensityAnalyzer()
-
-# Initialize spaCy lazily
-nlp = None
-
-def get_spacy_model():
-    global nlp
-    if nlp is None:
-        try:
-            import spacy
-            try:
-                nlp = spacy.load("en_core_web_sm")
-            except OSError:
-                print("Downloading spaCy model...")
-                spacy.cli.download("en_core_web_sm")
-                nlp = spacy.load("en_core_web_sm")
-        except Exception as e:
-            print(f"Error loading spaCy model: {e}")
-            return None
-    return nlp
+    nltk.download('punkt', quiet=True)
 
 def analyze_sentiment(text):
-    """Analyzes the sentiment of a given text."""
+    """Analyzes the sentiment of a given text using TextBlob."""
     try:
-        vs = analyzer.polarity_scores(text)
-        if vs['compound'] >= 0.05:
+        analysis = TextBlob(text)
+        # Get polarity (-1 to 1)
+        polarity = analysis.sentiment.polarity
+        
+        if polarity > 0.1:
             return "positive"
-        elif vs['compound'] <= -0.05:
+        elif polarity < -0.1:
             return "negative"
         else:
             return "neutral"
@@ -45,15 +26,18 @@ def analyze_sentiment(text):
         return "neutral"
 
 def extract_keywords(text):
-    """Extracts noun keywords from a given text and returns their lemmas."""
+    """Extracts keywords using simple NLP techniques."""
     try:
-        spacy_model = get_spacy_model()
-        if spacy_model is None:
-            return []
+        # Convert to lowercase and remove special characters
+        text = text.lower()
+        text = re.sub(r'[^\w\s]', '', text)
         
-        doc = spacy_model(text)
-        keywords = [token.lemma_.lower() for token in doc if token.pos_ in ["NOUN", "PROPN"] and not token.is_stop]
-        return list(set(keywords))  # Return unique lemmas
+        # Get words and filter out common words
+        words = text.split()
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of'}
+        keywords = [word for word in words if word not in stop_words and len(word) > 2]
+        
+        return list(set(keywords))  # Return unique keywords
     except Exception as e:
         print(f"Error in keyword extraction: {e}")
         return []
