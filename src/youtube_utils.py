@@ -21,12 +21,22 @@ def get_transcript(video_url):
         return None, "❌ Invalid YouTube URL"
 
     try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-        return transcript_list, None  # Return the list of transcript entries
+        # First try to get English transcript
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
+        return transcript_list, None
     except NoTranscriptFound:
-        return None, "❌ No transcript found for this video."
+        try:
+            # If English not available, try any available language
+            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+            return transcript_list, None
+        except NoTranscriptFound:
+            return None, "❌ No transcript available for this video. Please try a different video with subtitles enabled."
+        except VideoUnavailable:
+            return None, "❌ This video is unavailable or private."
+        except Exception as e:
+            return None, f"❌ Error fetching transcript: {str(e)}"
     except VideoUnavailable:
-        return None, "❌ This video is unavailable."
+        return None, "❌ This video is unavailable or private."
     except Exception as e:
         return None, f"❌ Error fetching transcript: {str(e)}"
 
