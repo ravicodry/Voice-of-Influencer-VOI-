@@ -19,7 +19,12 @@ def get_spacy_model():
     if nlp is None:
         try:
             import spacy
-            nlp = spacy.load("en_core_web_sm")
+            try:
+                nlp = spacy.load("en_core_web_sm")
+            except OSError:
+                print("Downloading spaCy model...")
+                spacy.cli.download("en_core_web_sm")
+                nlp = spacy.load("en_core_web_sm")
         except Exception as e:
             print(f"Error loading spaCy model: {e}")
             return None
@@ -27,12 +32,16 @@ def get_spacy_model():
 
 def analyze_sentiment(text):
     """Analyzes the sentiment of a given text."""
-    vs = analyzer.polarity_scores(text)
-    if vs['compound'] >= 0.05:
-        return "positive"
-    elif vs['compound'] <= -0.05:
-        return "negative"
-    else:
+    try:
+        vs = analyzer.polarity_scores(text)
+        if vs['compound'] >= 0.05:
+            return "positive"
+        elif vs['compound'] <= -0.05:
+            return "negative"
+        else:
+            return "neutral"
+    except Exception as e:
+        print(f"Error in sentiment analysis: {e}")
         return "neutral"
 
 def extract_keywords(text):

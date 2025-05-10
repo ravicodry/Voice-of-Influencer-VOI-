@@ -1,1 +1,2 @@
 python3-nltk
+python3-distutils
