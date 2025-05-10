@@ -1,6 +1,7 @@
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import spacy
+import sys
 
 # Download required NLTK data
 try:
@@ -15,9 +16,13 @@ analyzer = SentimentIntensityAnalyzer()
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
-    # If model is not downloaded, download it
-    spacy.cli.download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+    print("Downloading spaCy model...")
+    try:
+        spacy.cli.download("en_core_web_sm")
+        nlp = spacy.load("en_core_web_sm")
+    except Exception as e:
+        print(f"Error loading spaCy model: {e}")
+        sys.exit(1)
 
 def analyze_sentiment(text):
     """Analyzes the sentiment of a given text."""
@@ -31,6 +36,10 @@ def analyze_sentiment(text):
 
 def extract_keywords(text):
     """Extracts noun keywords from a given text and returns their lemmas."""
-    doc = nlp(text)
-    keywords = [token.lemma_.lower() for token in doc if token.pos_ in ["NOUN", "PROPN"] and not token.is_stop]
-    return list(set(keywords)) # Return unique lemmas
+    try:
+        doc = nlp(text)
+        keywords = [token.lemma_.lower() for token in doc if token.pos_ in ["NOUN", "PROPN"] and not token.is_stop]
+        return list(set(keywords))  # Return unique lemmas
+    except Exception as e:
+        print(f"Error in keyword extraction: {e}")
+        return []
