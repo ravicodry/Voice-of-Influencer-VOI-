@@ -2,14 +2,22 @@ import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import spacy
 
-# Download VADER lexicon if you haven't already
+# Download required NLTK data
 try:
     nltk.data.find('sentiment/vader_lexicon.zip')
-except nltk.downloader.DownloadError:
-    nltk.download('vader_lexicon')
+except LookupError:
+    nltk.download('vader_lexicon', quiet=True)
 
+# Initialize the analyzer
 analyzer = SentimentIntensityAnalyzer()
-nlp = spacy.load("en_core_web_sm")
+
+# Load spaCy model
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    # If model is not downloaded, download it
+    spacy.cli.download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 
 def analyze_sentiment(text):
     """Analyzes the sentiment of a given text."""

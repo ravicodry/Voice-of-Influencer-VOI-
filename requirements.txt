@@ -2,8 +2,8 @@ streamlit
 pandas
 youtube-transcript-api
 requests
-nltk
-spacy
+nltk==3.8.1
+spacy==3.7.2
 openai
 python-dotenv
 wordcloud
