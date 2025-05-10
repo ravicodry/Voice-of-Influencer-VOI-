@@ -1,6 +1,10 @@
 import nltk
 from textblob import TextBlob
 import re
+import warnings
+
+# Suppress the specific warning
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="textblob")
 
 # Download required NLTK data
 try:
