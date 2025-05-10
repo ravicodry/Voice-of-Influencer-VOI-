@@ -1,5 +1,6 @@
 streamlit
-pandas
+numpy==1.24.3
+pandas==2.0.3
 youtube-transcript-api
 requests
 nltk==3.8.1
