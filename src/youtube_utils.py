@@ -30,7 +30,19 @@ def get_transcript(video_url):
             transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
             return transcript_list, None
         except NoTranscriptFound:
-            return None, "❌ No transcript available for this video. Please try a different video with subtitles enabled."
+            return None, """
+            ❌ No transcript available for this video. 
+            
+            To analyze a video, please make sure:
+            1. The video has subtitles/closed captions enabled
+            2. Look for the CC (Closed Captions) icon in the video player
+            3. Try videos from official channels or larger content creators
+            4. English videos work best
+            
+            Try these example videos that have subtitles:
+            - https://www.youtube.com/watch?v=dQw4w9WgXcQ
+            - https://www.youtube.com/watch?v=9bZkp7q19f0
+            """
         except VideoUnavailable:
             return None, "❌ This video is unavailable or private."
         except Exception as e:

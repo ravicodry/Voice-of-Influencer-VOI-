@@ -3,7 +3,7 @@ import pandas as pd
 from src.youtube_utils import get_transcript, get_video_details
 from src.llm_utils import analyze_with_llm
 from src.storage_utils import save_segment_product_analysis, load_segment_product_analysis
-from src.nlp_utils import analyze_sentiment, extract_keywords
+from src.nlp_utils import analyze_sentiment, extract_keywords, generate_summary
 
 # Lazy load heavy dependencies
 @st.cache_resource
@@ -71,10 +71,22 @@ if st.button("Analyze"):
         st.error("Please enter the name of the product you want to analyze in the sidebar.")
     else:
         with st.spinner("Fetching transcript..."):
-            transcript_list, error = get_cached_transcript(video_url)
+            transcript_list, error = get_transcript(video_url)
 
         if error:
             st.error(error)
+            st.info("💡 Tips for finding videos with transcripts:")
+            st.markdown("""
+            ### How to find videos with transcripts:
+            1. Look for the CC (Closed Captions) icon in the video player
+            2. Try videos from official channels or larger content creators
+            3. English videos work best
+            4. Check if the video has subtitles enabled in the video settings
+            
+            ### Example videos with transcripts:
+            - [Example 1](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+            - [Example 2](https://www.youtube.com/watch?v=9bZkp7q19f0)
+            """)
         elif not transcript_list:
             st.error("No transcript available for this video. Analysis cannot proceed.")
         else:
@@ -109,7 +121,7 @@ if st.button("Analyze"):
                         'keywords': keywords,
                         'good_aspect': list(set(good_aspect)),
                         'bad_aspect': list(set(bad_aspect)),
-                        'product_name': user_defined_product.strip() # Use user-defined product name
+                        'product_name': user_defined_product.strip()
                     })
 
             with st.spinner("Fetching video details..."):
@@ -125,6 +137,25 @@ if st.button("Analyze"):
                 with st.spinner("Saving segment-level analysis..."):
                     save_segment_product_analysis(analyzed_segments)
                     st.success("Segment-level analysis complete and saved! ✅")
+
+            # Generate and display summary
+            with st.spinner("Generating summary..."):
+                summary = generate_summary(analyzed_segments)
+                if summary:
+                    st.subheader("📝 Video Analysis Summary")
+                    st.write(summary['summary_text'])
+                    
+                    # Display sentiment distribution
+                    st.subheader("Sentiment Distribution")
+                    sentiment_df = pd.DataFrame.from_dict(summary['sentiment_distribution'], 
+                                                        orient='index', 
+                                                        columns=['count'])
+                    st.bar_chart(sentiment_df)
+                    
+                    # Display top keywords
+                    st.subheader("Top Keywords")
+                    keyword_df = pd.DataFrame(summary['top_keywords'], columns=['keyword'])
+                    st.bar_chart(keyword_df)
 
 st.sidebar.header("Filter by Product")
 all_analyzed_segments = load_segment_product_analysis()
