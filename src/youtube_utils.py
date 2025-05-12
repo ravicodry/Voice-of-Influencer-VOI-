@@ -18,16 +18,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def extract_video_id(youtube_url):
-    try:
-        pattern = r"(?:v=|\/)([0-9A-Za-z_-]{11}).*"
-        match = re.search(pattern, youtube_url)
-        if match:
-            return match.group(1)
-        logger.warning(f"Invalid YouTube URL format: {youtube_url}")
-        return None
-    except Exception as e:
-        logger.error(f"Error extracting video ID: {str(e)}")
-        return None
+    pattern = r"(?:v=|\/)([0-9A-Za-z_-]{11}).*"
+    match = re.search(pattern, youtube_url)
+    if match:
+        return match.group(1)
+    return None
 
 def get_transcript(video_url):
     video_id = extract_video_id(video_url)
@@ -35,38 +30,16 @@ def get_transcript(video_url):
         return None, "❌ Invalid YouTube URL"
 
     try:
-        # First, try to list available transcripts
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-        
-        # Try to get English transcript first, then fallback to others
-        languages_to_try = ['en', 'en-US']
-        for lang in languages_to_try:
-            try:
-                transcript = transcript_list.find_transcript([lang])
-                transcript_data = transcript.fetch()
-                return transcript_data, None
-            except NoTranscriptFound:
-                continue
-        
-        # If no English transcript found, try any available language
+        # Try to get English transcript first
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
+        return transcript, None
+    except NoTranscriptFound:
+        # If English not available, try any available language
         try:
-            transcript = transcript_list.find_transcript()
-            transcript_data = transcript.fetch()
-            return transcript_data, None
+            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            return transcript, None
         except NoTranscriptFound:
-            available_langs = [t.language_code for t in transcript_list]
-            return None, f"""
-            ❌ No transcript available for this video. 
-            
-            Available languages: {available_langs}
-            
-            Please try:
-            1. A different video
-            2. A video with English subtitles
-            3. One of these example videos:
-               - https://www.youtube.com/watch?v=dQw4w9WgXcQ
-               - https://www.youtube.com/watch?v=9bZkp7q19f0
-            """
+            return None, "❌ No transcript available for this video. Please try a different video."
     except VideoUnavailable:
         return None, "❌ This video is unavailable or private."
     except Exception as e:
