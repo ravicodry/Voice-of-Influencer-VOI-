@@ -76,17 +76,7 @@ if st.button("Analyze"):
         if error:
             st.error(error)
             st.info("💡 Tips for finding videos with transcripts:")
-            st.markdown("""
-            ### How to find videos with transcripts:
-            1. Look for the CC (Closed Captions) icon in the video player
-            2. Try videos from official channels or larger content creators
-            3. English videos work best
-            4. Check if the video has subtitles enabled in the video settings
             
-            ### Example videos with transcripts:
-            - [Example 1](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
-            - [Example 2](https://www.youtube.com/watch?v=9bZkp7q19f0)
-            """)
         elif not transcript_list:
             st.error("No transcript available for this video. Analysis cannot proceed.")
         else:
@@ -95,9 +85,9 @@ if st.button("Analyze"):
             analyzed_segments = []
             with st.spinner("Analyzing segments..."):
                 for segment in transcript_list:
-                    text = segment['text']
-                    start_time = segment['start']
-                    end_time = segment['start'] + segment['duration']
+                    text = segment.text  # Changed from segment['text']
+                    start_time = segment.start  # Changed from segment['start']
+                    end_time = segment.start + segment.duration  # Changed from segment['duration']
 
                     sentiment = analyze_sentiment(text)
                     keywords = filter_keywords(extract_keywords(text))

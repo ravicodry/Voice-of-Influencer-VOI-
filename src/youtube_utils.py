@@ -21,32 +21,39 @@ def get_transcript(video_url):
         return None, "❌ Invalid YouTube URL"
 
     try:
-        # First try to get English transcript
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
-        return transcript_list, None
-    except NoTranscriptFound:
+        # First, try to list available transcripts
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        
+        # Try to get English transcript first
         try:
-            # If English not available, try any available language
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-            return transcript_list, None
+            transcript = transcript_list.find_transcript(['en'])
+            transcript_data = transcript.fetch()
+            return transcript_data, None
         except NoTranscriptFound:
-            return None, """
-            ❌ No transcript available for this video. 
-            
-            To analyze a video, please make sure:
-            1. The video has subtitles/closed captions enabled
-            2. Look for the CC (Closed Captions) icon in the video player
-            3. Try videos from official channels or larger content creators
-            4. English videos work best
-            
-            Try these example videos that have subtitles:
-            - https://www.youtube.com/watch?v=dQw4w9WgXcQ
-            - https://www.youtube.com/watch?v=9bZkp7q19f0
-            """
-        except VideoUnavailable:
-            return None, "❌ This video is unavailable or private."
-        except Exception as e:
-            return None, f"❌ Error fetching transcript: {str(e)}"
+            # If English not available, try any available language
+            try:
+                transcript = transcript_list.find_transcript(['en-US'])
+                transcript_data = transcript.fetch()
+                return transcript_data, None
+            except NoTranscriptFound:
+                # Try any available language
+                try:
+                    transcript = transcript_list.find_transcript()
+                    transcript_data = transcript.fetch()
+                    return transcript_data, None
+                except NoTranscriptFound:
+                    return None, """
+                    ❌ No transcript available for this video. 
+                    
+                    Available languages: {}
+                    
+                    Please try:
+                    1. A different video
+                    2. A video with English subtitles
+                    3. One of these example videos:
+                       - https://www.youtube.com/watch?v=dQw4w9WgXcQ
+                       - https://www.youtube.com/watch?v=9bZkp7q19f0
+                    """.format([t.language_code for t in transcript_list])
     except VideoUnavailable:
         return None, "❌ This video is unavailable or private."
     except Exception as e:
@@ -58,9 +65,10 @@ def get_video_details(video_url):
         return None, "❌ Invalid YouTube URL"
 
     try:
-        api_key = os.getenv("YOUTUBE_API_KEY")  # Get API key from environment variable
+        api_key = os.getenv("YOUTUBE_API_KEY")
         if not api_key:
             return None, "❌ YouTube API key not found in environment variables."
+        
         url = f"https://youtube.googleapis.com/youtube/v3/videos?part=snippet,statistics&id={video_id}&key={api_key}"
         response = requests.get(url)
         data = response.json()
