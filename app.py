@@ -4,8 +4,17 @@ from src.youtube_utils import get_transcript, get_video_details
 from src.llm_utils import analyze_with_llm
 from src.storage_utils import save_segment_product_analysis, load_segment_product_analysis
 from src.nlp_utils import analyze_sentiment, extract_keywords
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
+
+# Lazy load heavy dependencies
+@st.cache_resource
+def load_wordcloud():
+    from wordcloud import WordCloud
+    return WordCloud
+
+@st.cache_resource
+def load_matplotlib():
+    import matplotlib.pyplot as plt
+    return plt
 
 st.set_page_config(page_title="Voice of influencer", layout="wide")
 st.title("🎥 YouTube Product Review Analyzer")
@@ -40,12 +49,20 @@ def filter_keywords(keywords):
 
 def generate_wordcloud(text, title):
     """Generates and displays a word cloud."""
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
-    fig, ax = plt.subplots()
+    wordcloud = load_wordcloud()(width=800, height=400, background_color='white').generate(text)
+    fig, ax = load_matplotlib().subplots()
     ax.imshow(wordcloud, interpolation='bilinear')
     ax.axis("off")
     st.subheader(title)
     st.pyplot(fig)
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_cached_transcript(video_url):
+    return get_transcript(video_url)
+
+@st.cache_data(ttl=3600)
+def get_cached_video_details(video_url):
+    return get_video_details(video_url)
 
 if st.button("Analyze"):
     if not video_url:
@@ -54,7 +71,7 @@ if st.button("Analyze"):
         st.error("Please enter the name of the product you want to analyze in the sidebar.")
     else:
         with st.spinner("Fetching transcript..."):
-            transcript_list, error = get_transcript(video_url)
+            transcript_list, error = get_cached_transcript(video_url)
 
         if error:
             st.error(error)
@@ -96,7 +113,7 @@ if st.button("Analyze"):
                     })
 
             with st.spinner("Fetching video details..."):
-                details, error_details = get_video_details(video_url)
+                details, error_details = get_cached_video_details(video_url)
                 if details:
                     for segment in analyzed_segments:
                         segment['video_title'] = details['title']
