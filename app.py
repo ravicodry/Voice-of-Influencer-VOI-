@@ -4,6 +4,7 @@ from src.youtube_utils import get_transcript, get_video_details
 from src.llm_utils import analyze_with_llm
 from src.storage_utils import save_segment_product_analysis, load_segment_product_analysis
 from src.nlp_utils import analyze_sentiment, extract_keywords, generate_summary
+import re
 
 # Lazy load heavy dependencies
 @st.cache_resource
@@ -24,6 +25,10 @@ video_url = st.text_input("Enter YouTube Video URL:")
 # Sidebar for User-Defined Product
 st.sidebar.header("Product to Analyze")
 user_defined_product = st.sidebar.text_input("Enter the Product Name:")
+
+# Pre-compile regex patterns
+STOP_WORDS = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of'])
+PUNCTUATION_PATTERN = re.compile(r'[^\w\s]')
 
 def filter_keywords(keywords):
     """Filters common and less relevant keywords."""
@@ -64,6 +69,27 @@ def get_cached_transcript(video_url):
 def get_cached_video_details(video_url):
     return get_video_details(video_url)
 
+# Add caching for sentiment analysis and keyword extraction
+@st.cache_data(ttl=3600)
+def get_cached_sentiment(text):
+    return analyze_sentiment(text)
+
+@st.cache_data(ttl=3600)
+def get_cached_keywords(text):
+    return filter_keywords(extract_keywords(text))
+
+def extract_keywords(text):
+    """Optimized keyword extraction."""
+    # Convert to lowercase and remove special characters
+    text = text.lower()
+    text = PUNCTUATION_PATTERN.sub('', text)
+    
+    # Get words and filter out common words
+    words = text.split()
+    keywords = [word for word in words if word not in STOP_WORDS and len(word) > 2]
+    
+    return list(set(keywords))
+
 if st.button("Analyze"):
     if not video_url:
         st.error("Please enter a valid YouTube URL.")
@@ -82,15 +108,20 @@ if st.button("Analyze"):
         else:
             st.success("Transcript fetched successfully!")
 
-            analyzed_segments = []
+            # Add progress bar for better user feedback
             with st.spinner("Analyzing segments..."):
-                for segment in transcript_list:
-                    text = segment.text  # Changed from segment['text']
-                    start_time = segment.start  # Changed from segment['start']
-                    end_time = segment.start + segment.duration  # Changed from segment['duration']
+                progress_bar = st.progress(0)
+                analyzed_segments = []
+                total_segments = len(transcript_list)
+                
+                for i, segment in enumerate(transcript_list):
+                    # Process segment
+                    text = segment.text
+                    start_time = segment.start
+                    end_time = segment.start + segment.duration
 
-                    sentiment = analyze_sentiment(text)
-                    keywords = filter_keywords(extract_keywords(text))
+                    sentiment = get_cached_sentiment(text)
+                    keywords = get_cached_keywords(text)
                     good_aspect = []
                     bad_aspect = []
 
@@ -113,6 +144,10 @@ if st.button("Analyze"):
                         'bad_aspect': list(set(bad_aspect)),
                         'product_name': user_defined_product.strip()
                     })
+                    
+                    # Update progress bar
+                    progress = (i + 1) / total_segments
+                    progress_bar.progress(progress)
 
             with st.spinner("Fetching video details..."):
                 details, error_details = get_cached_video_details(video_url)

@@ -4,16 +4,30 @@ import re
 import requests
 import os
 from dotenv import load_dotenv
+from functools import lru_cache
+import time
+import logging
 
 load_dotenv()  # Load environment variables from .env
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 def extract_video_id(youtube_url):
-    # Supports many YouTube URL formats
-    pattern = r"(?:v=|\/)([0-9A-Za-z_-]{11}).*"
-    match = re.search(pattern, youtube_url)
-    if match:
-        return match.group(1)
-    return None
+    try:
+        pattern = r"(?:v=|\/)([0-9A-Za-z_-]{11}).*"
+        match = re.search(pattern, youtube_url)
+        if match:
+            return match.group(1)
+        logger.warning(f"Invalid YouTube URL format: {youtube_url}")
+        return None
+    except Exception as e:
+        logger.error(f"Error extracting video ID: {str(e)}")
+        return None
 
 def get_transcript(video_url):
     video_id = extract_video_id(video_url)
@@ -24,41 +38,41 @@ def get_transcript(video_url):
         # First, try to list available transcripts
         transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
         
-        # Try to get English transcript first
-        try:
-            transcript = transcript_list.find_transcript(['en'])
-            transcript_data = transcript.fetch()
-            return transcript_data, None
-        except NoTranscriptFound:
-            # If English not available, try any available language
+        # Try to get English transcript first, then fallback to others
+        languages_to_try = ['en', 'en-US']
+        for lang in languages_to_try:
             try:
-                transcript = transcript_list.find_transcript(['en-US'])
+                transcript = transcript_list.find_transcript([lang])
                 transcript_data = transcript.fetch()
                 return transcript_data, None
             except NoTranscriptFound:
-                # Try any available language
-                try:
-                    transcript = transcript_list.find_transcript()
-                    transcript_data = transcript.fetch()
-                    return transcript_data, None
-                except NoTranscriptFound:
-                    return None, """
-                    ❌ No transcript available for this video. 
-                    
-                    Available languages: {}
-                    
-                    Please try:
-                    1. A different video
-                    2. A video with English subtitles
-                    3. One of these example videos:
-                       - https://www.youtube.com/watch?v=dQw4w9WgXcQ
-                       - https://www.youtube.com/watch?v=9bZkp7q19f0
-                    """.format([t.language_code for t in transcript_list])
+                continue
+        
+        # If no English transcript found, try any available language
+        try:
+            transcript = transcript_list.find_transcript()
+            transcript_data = transcript.fetch()
+            return transcript_data, None
+        except NoTranscriptFound:
+            available_langs = [t.language_code for t in transcript_list]
+            return None, f"""
+            ❌ No transcript available for this video. 
+            
+            Available languages: {available_langs}
+            
+            Please try:
+            1. A different video
+            2. A video with English subtitles
+            3. One of these example videos:
+               - https://www.youtube.com/watch?v=dQw4w9WgXcQ
+               - https://www.youtube.com/watch?v=9bZkp7q19f0
+            """
     except VideoUnavailable:
         return None, "❌ This video is unavailable or private."
     except Exception as e:
         return None, f"❌ Error fetching transcript: {str(e)}"
 
+@lru_cache(maxsize=100)
 def get_video_details(video_url):
     video_id = extract_video_id(video_url)
     if not video_id:
@@ -85,6 +99,7 @@ def get_video_details(video_url):
             "views": item["statistics"].get("viewCount", 0),
             "likes": item["statistics"].get("likeCount", 0),
             "comments": item["statistics"].get("commentCount", 0),
+            "timestamp": time.time()  # Add timestamp for cache invalidation
         }
         return details, None
     except requests.exceptions.RequestException as e:
