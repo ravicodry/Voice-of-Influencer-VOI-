@@ -115,10 +115,10 @@ if st.button("Analyze"):
                 total_segments = len(transcript_list)
                 
                 for i, segment in enumerate(transcript_list):
-                    # Process segment
-                    text = segment.text
-                    start_time = segment.start
-                    end_time = segment.start + segment.duration
+                    # Process segment - Updated to use dictionary access
+                    text = segment['text']  # Changed from segment.text
+                    start_time = segment['start']  # Changed from segment.start
+                    end_time = segment['start'] + segment['duration']  # Changed from segment.duration
 
                     sentiment = get_cached_sentiment(text)
                     keywords = get_cached_keywords(text)
@@ -177,10 +177,15 @@ if st.button("Analyze"):
                                                         columns=['count'])
                     st.bar_chart(sentiment_df)
                     
-                    # Display top keywords
-                    st.subheader("Top Keywords")
-                    keyword_df = pd.DataFrame(summary['top_keywords'], columns=['keyword'])
-                    st.bar_chart(keyword_df)
+                    # Display top positive keywords
+                    st.subheader("Top Positive Keywords")
+                    keyword_df_pos = pd.DataFrame(summary['positive_keywords'], columns=['keyword'])
+                    st.bar_chart(keyword_df_pos)
+
+                    # Display top negative keywords
+                    st.subheader("Top Negative Keywords")
+                    keyword_df_neg = pd.DataFrame(summary['negative_keywords'], columns=['keyword'])
+                    st.bar_chart(keyword_df_neg)
 
 st.sidebar.header("Filter by Product")
 all_analyzed_segments = load_segment_product_analysis()

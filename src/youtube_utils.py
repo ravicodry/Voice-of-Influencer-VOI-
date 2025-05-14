@@ -60,6 +60,9 @@ def get_video_details(video_url):
         response = requests.get(url)
         data = response.json()
 
+        # Add logging to see the API response
+        logger.info(f"YouTube API Response: {data}")
+
         if "error" in data:
             return None, f"❌ YouTube API Error: {data['error']['message']}"
 
@@ -67,15 +70,35 @@ def get_video_details(video_url):
             return None, "❌ Video details not found."
 
         item = data["items"][0]
+        # Log the statistics part specifically
+        logger.info(f"Video Statistics: {item.get('statistics', {})}")
+        
+        # Calculate engagement rate (likes + comments) / views
+        view_count = int(item["statistics"].get("viewCount", 0))
+        like_count = int(item["statistics"].get("likeCount", 0))
+        comment_count = int(item["statistics"].get("commentCount", 0))
+        
+        engagement_rate = 0
+        if view_count > 0:
+            engagement_rate = ((like_count + comment_count) / view_count) * 100
+        
+        # Determine if trending (high engagement rate and views)
+        is_trending = engagement_rate > 5 and view_count > 10000
+        
         details = {
             "title": item["snippet"]["title"],
-            "views": item["statistics"].get("viewCount", 0),
-            "likes": item["statistics"].get("likeCount", 0),
-            "comments": item["statistics"].get("commentCount", 0),
+            "view_count": view_count,
+            "like_count": like_count,
+            "comment_count": comment_count,
+            "publish_date": item["snippet"]["publishedAt"],
+            "engagement_rate": round(engagement_rate, 2),
+            "is_trending": is_trending,
             "timestamp": time.time()  # Add timestamp for cache invalidation
         }
         return details, None
     except requests.exceptions.RequestException as e:
+        logger.error(f"Network error: {str(e)}")
         return None, f"❌ Network error fetching video details: {str(e)}"
     except Exception as e:
+        logger.error(f"General error: {str(e)}")
         return None, f"❌ Error fetching video details: {str(e)}"
