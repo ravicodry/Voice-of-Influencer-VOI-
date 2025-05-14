@@ -1,0 +1,40 @@
+[
+  {
+    "video_url": "https://www.youtube.com/watch?v=yWBz2qZJ8zY&t=21s",
+    "video_title": "Samsung Galaxy S25 Edge Impressions: Nobody Asked!",
+    "video_details": {
+      "title": "Samsung Galaxy S25 Edge Impressions: Nobody Asked!",
+      "view_count": 2988663,
+      "like_count": 86508,
+      "comment_count": 7622,
+      "publish_date": "2025-05-13T00:00:37Z",
+      "engagement_rate": 3.15,
+      "is_trending": false,
+      "timestamp": 1747243111.582529
+    },
+    "product_name": "s25",
+    "overall_sentiment": "neutral",
+    "positive_keywords": [
+      "camera",
+      "processor",
+      "display",
+      "design"
+    ],
+    "negative_keywords": [
+      "battery",
+      "trade-offs"
+    ],
+    "positive_frequencies": {
+      "camera": 7,
+      "processor": 0,
+      "display": 1,
+      "design": 4
+    },
+    "negative_frequencies": {
+      "battery": 6,
+      "trade-offs": 1
+    },
+    "summary": "SUMMARY:\nThe Samsung Galaxy S25 Edge is a thin addition to the S25 lineup, bridging the gap between the base S25 and the S25 Ultra. It features a 200-megapixel primary camera, a 12-megapixel ultra-wide camera, a Snapdragon 8 Elite processor, a 6.7-inch 120 Hz 1440p AMOLED display, 12 GB of RAM, and 256 or 512 GB of storage. The design is sleek and modern, with a floating island camera design. However, the ultra-thin design of 5.8 mm comes with trade-offs, such as a smaller battery capacity of 3,900 mAh and the absence of a telephoto camera.\n\nPOSITIVE KEYWORDS:\n- camera (200-megapixel primary, 12-megapixel ultra-wide)\n- processor (Snapdragon 8 Elite)\n- display (6.7-inch 120 Hz 1440p AMOLED)\n- design (sleek, modern, floating island)\n\nNEGATIVE KEYWORDS:\n- battery (3,900 mAh)\n- trade-offs (smaller battery, absence of telephoto camera)",
+    "timestamp": "2025-05-14T22:48:36.182370"
+  }
+]
