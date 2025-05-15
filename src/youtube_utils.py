@@ -30,16 +30,55 @@ def get_transcript(video_url):
         return None, "❌ Invalid YouTube URL"
 
     try:
-        # Try to get English transcript first
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
-        return transcript, None
-    except NoTranscriptFound:
-        # If English not available, try any available language
+        # Try to get English transcript first using the standard method
         try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
             return transcript, None
         except NoTranscriptFound:
+            # If English not available, try any available language
+            try:
+                transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                return transcript, None
+            except Exception:
+                # Standard approach failed, try with cookies next
+                pass
+        except Exception:
+            # Standard approach failed, try with cookies next
+            pass
+
+        # Try with cookies approach (often works on cloud deployments)
+        try:
+            logger.info("Attempting transcript fetch with cookies approach")
+            # Get cookies from a YouTube page
+            session = requests.Session()
+            response = session.get("https://www.youtube.com")
+            cookies = session.cookies.get_dict()
+            
+            # Convert cookies to the format expected by YouTubeTranscriptApi
+            formatted_cookies = ";".join([f"{k}={v}" for k, v in cookies.items()])
+            
+            # First try with English
+            try:
+                transcript = YouTubeTranscriptApi.get_transcript(
+                    video_id,
+                    languages=['en'],
+                    cookies=formatted_cookies
+                )
+                return transcript, None
+            except NoTranscriptFound:
+                # Then try with any language
+                transcript = YouTubeTranscriptApi.get_transcript(
+                    video_id,
+                    cookies=formatted_cookies
+                )
+                return transcript, None
+        except NoTranscriptFound:
             return None, "❌ No transcript available for this video. Please try a different video."
+        except VideoUnavailable:
+            return None, "❌ This video is unavailable or private."
+        except Exception as e:
+            return None, f"❌ Error fetching transcript: {str(e)}"
+            
     except VideoUnavailable:
         return None, "❌ This video is unavailable or private."
     except Exception as e:
