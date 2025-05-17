@@ -24,65 +24,75 @@ def extract_video_id(youtube_url):
         return match.group(1)
     return None
 
-def get_transcript(video_url):
+def get_transcript(video_url, max_retries=3):
     video_id = extract_video_id(video_url)
     if not video_id:
         return None, "❌ Invalid YouTube URL"
 
-    try:
-        # Try to get English transcript first using the standard method
-        try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
-            return transcript, None
-        except NoTranscriptFound:
-            # If English not available, try any available language
-            try:
-                transcript = YouTubeTranscriptApi.get_transcript(video_id)
-                return transcript, None
-            except Exception:
-                # Standard approach failed, try with cookies next
-                pass
-        except Exception:
-            # Standard approach failed, try with cookies next
-            pass
+    # Create a persistent session
+    session = requests.Session()
+    
+    # Set up headers to mimic a browser
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+    }
+    session.headers.update(headers)
 
-        # Try with cookies approach (often works on cloud deployments)
+    def try_get_transcript(method="standard", cookies=None):
         try:
-            logger.info("Attempting transcript fetch with cookies approach")
-            # Get cookies from a YouTube page
-            session = requests.Session()
-            response = session.get("https://www.youtube.com")
-            cookies = session.cookies.get_dict()
-            
-            # Convert cookies to the format expected by YouTubeTranscriptApi
-            formatted_cookies = ";".join([f"{k}={v}" for k, v in cookies.items()])
-            
-            # First try with English
-            try:
-                transcript = YouTubeTranscriptApi.get_transcript(
-                    video_id,
-                    languages=['en'],
-                    cookies=formatted_cookies
-                )
-                return transcript, None
-            except NoTranscriptFound:
-                # Then try with any language
-                transcript = YouTubeTranscriptApi.get_transcript(
-                    video_id,
-                    cookies=formatted_cookies
-                )
-                return transcript, None
+            if method == "standard":
+                return YouTubeTranscriptApi.get_transcript(video_id, languages=['en']), None
+            elif method == "any_language":
+                return YouTubeTranscriptApi.get_transcript(video_id), None
+            elif method == "with_cookies":
+                return YouTubeTranscriptApi.get_transcript(video_id, languages=['en'], cookies=cookies), None
+            elif method == "with_cookies_any_language":
+                return YouTubeTranscriptApi.get_transcript(video_id, cookies=cookies), None
         except NoTranscriptFound:
-            return None, "❌ No transcript available for this video. Please try a different video."
+            return None, "NoTranscriptFound"
         except VideoUnavailable:
-            return None, "❌ This video is unavailable or private."
+            return None, "VideoUnavailable"
         except Exception as e:
-            return None, f"❌ Error fetching transcript: {str(e)}"
-            
-    except VideoUnavailable:
-        return None, "❌ This video is unavailable or private."
+            return None, str(e)
+
+    # Try different methods with retries
+    methods = [
+        ("standard", None),
+        ("any_language", None),
+    ]
+
+    # Get fresh cookies
+    try:
+        response = session.get("https://www.youtube.com")
+        cookies = session.cookies.get_dict()
+        formatted_cookies = ";".join([f"{k}={v}" for k, v in cookies.items()])
+        methods.extend([
+            ("with_cookies", formatted_cookies),
+            ("with_cookies_any_language", formatted_cookies)
+        ])
     except Exception as e:
-        return None, f"❌ Error fetching transcript: {str(e)}"
+        logger.warning(f"Failed to get cookies: {str(e)}")
+
+    # Try each method with retries
+    for method, cookies in methods:
+        for attempt in range(max_retries):
+            logger.info(f"Attempt {attempt + 1}/{max_retries} using method: {method}")
+            
+            transcript, error = try_get_transcript(method, cookies)
+            
+            if transcript:
+                return transcript, None
+            
+            if error == "VideoUnavailable":
+                return None, "❌ This video is unavailable or private."
+            
+            if error != "NoTranscriptFound":
+                logger.warning(f"Error on attempt {attempt + 1}: {error}")
+                time.sleep(1)  # Wait before retry
+                continue
+
+    return None, "❌ No transcript available for this video. Please try a different video."
 
 @lru_cache(maxsize=100)
 def get_video_details(video_url):
