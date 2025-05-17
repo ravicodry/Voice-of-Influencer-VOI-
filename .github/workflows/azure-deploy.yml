@@ -20,6 +20,11 @@ jobs:
         pip install -r requirements.txt
         pip install gunicorn
     
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
     - name: Create deployment package
       run: |
         mkdir -p deployment
