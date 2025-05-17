@@ -20,6 +20,13 @@ jobs:
         pip install -r requirements.txt
         pip install gunicorn
     
+    - name: Debug - List files
+      run: |
+        echo "Current directory contents:"
+        ls -la
+        echo "src directory contents:"
+        ls -la src/
+    
     - name: Create deployment package
       run: |
         mkdir -p deployment
@@ -29,6 +36,8 @@ jobs:
         cp .deployment deployment/
         cp startup.txt deployment/
         cp packages.txt deployment/
+        echo "Deployment package contents:"
+        ls -la deployment/
     
     - name: Deploy to Azure
       uses: azure/webapps-deploy@v2
