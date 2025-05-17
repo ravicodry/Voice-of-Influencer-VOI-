@@ -26,8 +26,6 @@ jobs:
         cp app_new.py deployment/
         cp requirements.txt deployment/
         cp -r src deployment/
-        cp -r data deployment/
-        cp -r .streamlit deployment/
         cp .deployment deployment/
         cp startup.txt deployment/
         cp packages.txt deployment/
