@@ -30,6 +30,8 @@ jobs:
         cp startup.sh deployment/
         cp packages.txt deployment/
         cd deployment
+        echo "Files in deployment directory:"
+        ls -la
         zip -r ../deployment.zip .
         cd ..
         echo "Created deployment.zip"

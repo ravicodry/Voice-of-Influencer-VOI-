@@ -1,2 +1,4 @@
-python3-nltk
-python3-distutils
+python3.11
+python3.11-dev
+python3.11-venv
+gunicorn
