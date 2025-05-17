@@ -22,27 +22,29 @@ jobs:
     
     - name: Create deployment package
       run: |
+        echo "Current directory contents:"
+        ls -la
+        echo "Creating deployment package..."
         mkdir -p deployment
         cp app_new.py deployment/
         cp requirements.txt deployment/
         cp -r src deployment/
-        cp .deployment deployment/
-        cp startup.sh deployment/
+        cp web.config deployment/
         cp packages.txt deployment/
         cd deployment
-        echo "Files in deployment directory:"
+        echo "Deployment directory contents:"
         ls -la
-        zip -r ../deployment.zip .
+        tar -czf ../deployment.tar.gz .
         cd ..
-        echo "Created deployment.zip"
-        ls -la deployment.zip
+        echo "Created deployment.tar.gz"
+        ls -la deployment.tar.gz
     
     - name: Deploy to Azure
       uses: azure/webapps-deploy@v2
       with:
         app-name: 'youtube-product-analyzer'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: deployment.zip
+        package: deployment.tar.gz
         app-type: 'webapp'
         runtime: 'PYTHON|3.11'
-        startup-file: 'startup.sh' 
+        startup-file: 'gunicorn --bind=0.0.0.0 --timeout 600 app_new:app' 
