@@ -20,17 +20,22 @@ jobs:
         pip install -r requirements.txt
         pip install gunicorn
     
-    - name: Create deployment package
+    - name: Debug directory contents
       run: |
         echo "Current directory contents:"
         ls -la
+        echo "Checking if app_new.py exists:"
+        test -f app_new.py && echo "app_new.py exists" || echo "app_new.py not found"
+    
+    - name: Create deployment package
+      run: |
         echo "Creating deployment package..."
         mkdir -p deployment
-        cp app_new.py deployment/
-        cp requirements.txt deployment/
-        cp -r src deployment/
-        cp web.config deployment/
-        cp packages.txt deployment/
+        cp app_new.py deployment/ || echo "Failed to copy app_new.py"
+        cp requirements.txt deployment/ || echo "Failed to copy requirements.txt"
+        cp -r src deployment/ || echo "Failed to copy src directory"
+        cp web.config deployment/ || echo "Failed to copy web.config"
+        cp packages.txt deployment/ || echo "Failed to copy packages.txt"
         cd deployment
         echo "Deployment directory contents:"
         ls -la
