@@ -26,12 +26,11 @@ jobs:
         cp app_new.py deployment/
         cp requirements.txt deployment/
         cp -r src deployment/
-        cp -r utils deployment/
         cp -r data deployment/
         cp -r .streamlit deployment/
-        cp .env deployment/
         cp .deployment deployment/
         cp startup.txt deployment/
+        cp packages.txt deployment/
     
     - name: Deploy to Azure
       uses: azure/webapps-deploy@v2
@@ -45,4 +44,5 @@ jobs:
       with:
         inlineScript: |
           az webapp config set --name youtube-product-analyzer --resource-group youtube-analyzer-rg --startup-file "gunicorn --bind=0.0.0.0 --timeout 600 app_new:app"
-          az webapp config set --name youtube-product-analyzer --resource-group youtube-analyzer-rg --linux-fx-version "PYTHON|3.11" 
+          az webapp config set --name youtube-product-analyzer --resource-group youtube-analyzer-rg --linux-fx-version "PYTHON|3.11"
+          az webapp config appsettings set --name youtube-product-analyzer --resource-group youtube-analyzer-rg --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true 
