@@ -60,12 +60,10 @@ jobs:
         echo "Creating startup script..."
         echo '#!/bin/bash' > deployment/startup.sh
         echo 'cd /home/site/wwwroot' >> deployment/startup.sh
-        echo 'echo "Current directory: $(pwd)"' >> deployment/startup.sh
-        echo 'echo "Listing files:"' >> deployment/startup.sh
-        echo 'ls -la' >> deployment/startup.sh
-        echo 'echo "Setting up Python environment..."' >> deployment/startup.sh
+        echo 'echo "Creating virtual environment..."' >> deployment/startup.sh
         echo 'python -m venv antenv' >> deployment/startup.sh
         echo 'source antenv/bin/activate' >> deployment/startup.sh
+        echo 'echo "Installing dependencies..."' >> deployment/startup.sh
         echo 'python -m pip install --upgrade pip' >> deployment/startup.sh
         echo 'pip install streamlit' >> deployment/startup.sh
         echo 'pip install -r requirements.txt' >> deployment/startup.sh
