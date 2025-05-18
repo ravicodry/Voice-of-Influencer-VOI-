@@ -1,3 +1,4 @@
 [config]
 SCM_DO_BUILD_DURING_DEPLOYMENT=true
-STARTUP_COMMAND=gunicorn --bind=0.0.0.0 --timeout 600 app_new:app 
+STARTUP_COMMAND=startup.sh
+WEBSITE_PYTHON_VERSION=3.11 

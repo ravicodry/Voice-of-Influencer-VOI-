@@ -60,11 +60,10 @@ jobs:
         echo "Creating startup script..."
         echo '#!/bin/bash' > deployment/startup.sh
         echo 'cd /home/site/wwwroot' >> deployment/startup.sh
-        echo 'python -m venv antenv' >> deployment/startup.sh
-        echo 'source antenv/bin/activate' >> deployment/startup.sh
+        echo 'python -m pip install --upgrade pip' >> deployment/startup.sh
         echo 'pip install -r requirements.txt' >> deployment/startup.sh
         echo 'pip install gunicorn' >> deployment/startup.sh
-        echo 'gunicorn --bind=0.0.0.0 --timeout 600 app_new:app' >> deployment/startup.sh
+        echo 'gunicorn --bind=0.0.0.0:8000 --timeout 600 app_new:app' >> deployment/startup.sh
         chmod +x deployment/startup.sh
         
         # Show deployment directory contents
