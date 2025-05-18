@@ -63,7 +63,9 @@ jobs:
         echo 'echo "Current directory: $(pwd)"' >> deployment/startup.sh
         echo 'echo "Listing files:"' >> deployment/startup.sh
         echo 'ls -la' >> deployment/startup.sh
-        echo 'echo "Installing dependencies..."' >> deployment/startup.sh
+        echo 'echo "Setting up Python environment..."' >> deployment/startup.sh
+        echo 'python -m venv antenv' >> deployment/startup.sh
+        echo 'source antenv/bin/activate' >> deployment/startup.sh
         echo 'python -m pip install --upgrade pip' >> deployment/startup.sh
         echo 'pip install streamlit' >> deployment/startup.sh
         echo 'pip install -r requirements.txt' >> deployment/startup.sh
@@ -71,6 +73,11 @@ jobs:
         echo 'echo "Starting gunicorn..."' >> deployment/startup.sh
         echo 'gunicorn --bind=0.0.0.0:8000 --timeout 600 app_new:app' >> deployment/startup.sh
         chmod +x deployment/startup.sh
+        
+        # Create oryx-manifest.toml
+        echo "Creating oryx-manifest.toml..."
+        echo '[build]' > deployment/oryx-manifest.toml
+        echo 'python_version = "3.11"' >> deployment/oryx-manifest.toml
         
         # Show deployment directory contents
         echo "Deployment directory contents:"
