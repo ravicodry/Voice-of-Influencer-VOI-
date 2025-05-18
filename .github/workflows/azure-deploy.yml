@@ -43,6 +43,10 @@ jobs:
         cd ..
         echo "Created deployment.tar.gz"
         ls -la deployment.tar.gz
+        if [ ! -f deployment.tar.gz ]; then
+          echo "Error: deployment.tar.gz was not created"
+          exit 1
+        fi
     
     - name: Deploy to Azure
       uses: azure/webapps-deploy@v2
