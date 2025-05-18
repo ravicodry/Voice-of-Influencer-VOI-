@@ -26,45 +26,43 @@ jobs:
         ls -la
         echo "Current directory path:"
         pwd
-        echo "Checking if app_new.py exists:"
-        test -f app_new.py && echo "app_new.py exists" || echo "app_new.py not found"
     
     - name: Create deployment package
       run: |
         echo "Creating deployment package..."
-        WORKSPACE_DIR=$(pwd)
-        echo "Workspace directory: $WORKSPACE_DIR"
-        
+        # Create deployment directory
         mkdir -p deployment
-        cp app_new.py deployment/ || echo "Failed to copy app_new.py"
-        cp requirements.txt deployment/ || echo "Failed to copy requirements.txt"
-        cp -r src deployment/ || echo "Failed to copy src directory"
-        cp web.config deployment/ || echo "Failed to copy web.config"
-        cp packages.txt deployment/ || echo "Failed to copy packages.txt"
         
-        cd deployment
+        # Copy files
+        cp app_new.py deployment/
+        cp requirements.txt deployment/
+        cp -r src deployment/
+        cp web.config deployment/
+        cp packages.txt deployment/
+        
+        # Show deployment directory contents
         echo "Deployment directory contents:"
-        ls -la
-        echo "Creating tar.gz file..."
-        tar -czf "$WORKSPACE_DIR/deployment.tar.gz" .
-        cd "$WORKSPACE_DIR"
+        ls -la deployment/
         
-        echo "Checking if tar.gz was created:"
-        ls -la deployment.tar.gz
-        if [ ! -f deployment.tar.gz ]; then
-          echo "Error: deployment.tar.gz was not created"
+        # Create zip file
+        cd deployment
+        zip -r ../deployment.zip .
+        cd ..
+        
+        # Verify zip file
+        echo "Created deployment.zip"
+        ls -la deployment.zip
+        if [ ! -f deployment.zip ]; then
+          echo "Error: deployment.zip was not created"
           exit 1
         fi
-        
-        echo "Tar.gz file size:"
-        du -h deployment.tar.gz
     
     - name: Deploy to Azure
       uses: azure/webapps-deploy@v2
       with:
         app-name: 'youtube-product-analyzer'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: ${{ github.workspace }}/deployment.tar.gz
+        package: deployment.zip
         app-type: 'webapp'
         runtime: 'PYTHON|3.11'
         startup-file: 'gunicorn --bind=0.0.0.0 --timeout 600 app_new:app' 
