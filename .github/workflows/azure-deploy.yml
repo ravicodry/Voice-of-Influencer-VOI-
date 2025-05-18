@@ -33,12 +33,28 @@ jobs:
         # Create deployment directory
         mkdir -p deployment
         
-        # Copy files
-        cp app_new.py deployment/
-        cp requirements.txt deployment/
-        cp -r src deployment/
-        cp web.config deployment/
-        cp packages.txt deployment/
+        # List all files before copying
+        echo "Files in current directory:"
+        ls -la
+        
+        # Copy files with error checking
+        echo "Copying files..."
+        for file in app_new.py requirements.txt web.config packages.txt; do
+          if [ -f "$file" ]; then
+            echo "Copying $file"
+            cp "$file" deployment/
+          else
+            echo "Warning: $file not found"
+          fi
+        done
+        
+        # Copy src directory if it exists
+        if [ -d "src" ]; then
+          echo "Copying src directory"
+          cp -r src deployment/
+        else
+          echo "Warning: src directory not found"
+        fi
         
         # Show deployment directory contents
         echo "Deployment directory contents:"
