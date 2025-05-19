@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: streamlit-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app_new.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false 
