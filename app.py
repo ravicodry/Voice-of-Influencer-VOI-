@@ -150,13 +150,16 @@ if st.button("Analyze"):
                     progress_bar.progress(progress)
 
             with st.spinner("Fetching video details..."):
-                details, error_details = get_cached_video_details(video_url)
-                if details:
+                video_details, error_details = get_cached_video_details(video_url)
+                if error_details:
+                    error = error_details
+                else:
+                    video_title = video_details['title']
                     for segment in analyzed_segments:
-                        segment['video_title'] = details['title']
+                        segment['video_title'] = video_title
 
-            if error_details:
-                st.error(error_details)
+            if error:
+                st.error(error)
             else:
                 st.success("Video details fetched successfully!")
                 with st.spinner("Saving segment-level analysis..."):
